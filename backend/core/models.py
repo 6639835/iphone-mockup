@@ -55,19 +55,19 @@ IPHONE_MODELS = {
     "iPhone Air": IPhoneModel(
         name="iPhone Air",
         resolution=(1242, 2700),
-        colors=["Cloud White", "Light Gold", "Midnight", "Natural Silver", "Starlight"],
+        colors=["Cloud White", "Light Gold", "Sky Blue", "Space Black"],
         series="17",
     ),
     "iPhone 17 Pro": IPhoneModel(
         name="iPhone 17 Pro",
         resolution=(1206, 2622),
-        colors=["Cosmic Orange", "Deep Blue", "Midnight Titanium", "Sahara Gold"],
+        colors=["Cosmic Orange", "Deep Blue", "Silver"],
         series="17",
     ),
     "iPhone 17 Pro Max": IPhoneModel(
         name="iPhone 17 Pro Max",
         resolution=(1320, 2868),
-        colors=["Cosmic Orange", "Deep Blue", "Midnight Titanium", "Sahara Gold"],
+        colors=["Cosmic Orange", "Deep Blue", "Silver"],
         series="17",
     ),
 }
