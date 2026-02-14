@@ -101,6 +101,14 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 - `PORT`: Server port (default: 8000)
 - `CORS_ORIGINS`: Comma-separated list of allowed origins (for production)
+- `FRAMES_BASE_URL`: Optional public base URL for frame PNGs (for example `https://pub-7ad0d44bcb4948a2a359b34d35bc8fc8.r2.dev`)
+
+Example:
+
+```bash
+export FRAMES_BASE_URL="https://pub-7ad0d44bcb4948a2a359b34d35bc8fc8.r2.dev"
+python main.py
+```
 
 ## Code Formatting
 

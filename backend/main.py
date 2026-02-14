@@ -1,8 +1,12 @@
 """FastAPI backend for iPhone mockup generation."""
 
 import io
+import os
 from pathlib import Path
 from typing import Literal
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +28,51 @@ app.add_middleware(
 )
 
 FRAMES_DIR = Path(__file__).parent / "frames"
+FRAMES_BASE_URL = os.getenv("FRAMES_BASE_URL", "").strip().rstrip("/")
+
+
+def _frame_object_key(model: str, color: str, orientation: str) -> str:
+    frame_filename = f"{model} - {color} - {orientation}.png"
+    return f"{model}/{frame_filename}"
+
+
+def load_frame(model: str, color: str, orientation: str) -> Image.Image:
+    """Load frame image from configured URL or local filesystem."""
+    frame_key = _frame_object_key(model, color, orientation)
+
+    if FRAMES_BASE_URL:
+        frame_url = f"{FRAMES_BASE_URL}/{quote(frame_key, safe='/')}"
+        try:
+            request = Request(frame_url, headers={"User-Agent": "iphone-mockup-backend/1.0"})
+            with urlopen(request, timeout=20) as response:
+                frame_bytes = response.read()
+            frame = Image.open(io.BytesIO(frame_bytes))
+            frame.load()
+            return frame
+        except HTTPError as error:
+            if error.code == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Frame not found: {model} - {color} - {orientation}",
+                )
+            raise HTTPException(
+                status_code=502, detail=f"Failed to fetch frame image: HTTP {error.code}"
+            )
+        except URLError:
+            raise HTTPException(
+                status_code=502, detail="Failed to fetch frame image from FRAMES_BASE_URL"
+            )
+
+    frame_path = find_frame_path(FRAMES_DIR, model, color, orientation)
+    if not frame_path:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Frame not found: {model} - {color} - {orientation}",
+        )
+
+    frame = Image.open(frame_path)
+    frame.load()
+    return frame
 
 
 @app.get("/")
@@ -143,16 +192,8 @@ async def generate_mockup(
                 detail=f"Invalid color '{color}' for {model}. Available: {model_info.colors}",
             )
 
-        # Find frame file
-        frame_path = find_frame_path(FRAMES_DIR, model, color, orientation)
-        if not frame_path:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Frame not found: {model} - {color} - {orientation}",
-            )
-
         # Load frame and compose
-        frame = Image.open(frame_path)
+        frame = load_frame(model, color, orientation)
         composed = compose_mockup(frame, screenshot)
 
         # Return as PNG stream

@@ -20,6 +20,7 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+export FRAMES_BASE_URL="https://pub-7ad0d44bcb4948a2a359b34d35bc8fc8.r2.dev"
 python main.py
 
 # 2. In a new terminal, start the frontend
