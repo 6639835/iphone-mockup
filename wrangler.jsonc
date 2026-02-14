@@ -1,0 +1,11 @@
+{
+  "name": "iphone-mockup-frontend",
+  "compatibility_date": "2026-02-14",
+  "build": {
+    "command": "cd frontend && npm ci && npm run build"
+  },
+  "assets": {
+    "directory": "./frontend/out",
+    "not_found_handling": "single-page-application"
+  }
+}

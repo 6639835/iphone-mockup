@@ -50,6 +50,16 @@ See individual READMEs:
 
 ## 🚀 Deployment
 
+### Frontend (Cloudflare Workers Static Assets)
+```bash
+# From repo root
+npx wrangler deploy
+```
+
+`wrangler.jsonc` will:
+- Build the Next.js frontend (`cd frontend && npm ci && npm run build`)
+- Deploy static assets from `frontend/out`
+
 ### Frontend (Vercel)
 ```bash
 cd frontend
