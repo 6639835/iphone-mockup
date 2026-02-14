@@ -147,9 +147,7 @@ export function MockupGenerator() {
       <Card>
         <CardHeader>
           <CardTitle>Create Mockup</CardTitle>
-          <CardDescription>
-            Upload your iPhone screenshot to get started
-          </CardDescription>
+          <CardDescription>Upload your iPhone screenshot to get started</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -221,7 +219,10 @@ export function MockupGenerator() {
                   </p>
                   {detection.all_matches.length > 1 && (
                     <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-500">
-                      Also matches: {detection.all_matches.filter(m => m !== detection.detected_model).join(", ")}
+                      Also matches:{" "}
+                      {detection.all_matches
+                        .filter((m) => m !== detection.detected_model)
+                        .join(", ")}
                     </p>
                   )}
                 </div>
@@ -244,9 +245,7 @@ export function MockupGenerator() {
                           : "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
                       )}
                     >
-                      <p className="font-medium text-neutral-900 dark:text-neutral-100">
-                        {color}
-                      </p>
+                      <p className="font-medium text-neutral-900 dark:text-neutral-100">{color}</p>
                     </button>
                   ))}
                 </div>

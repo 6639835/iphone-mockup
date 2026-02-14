@@ -106,6 +106,8 @@ frontend/
 - `npm run build` - Build for production
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run format` - Format files with Prettier
+- `npm run format:check` - Check formatting with Prettier
 
 ## API Integration
 

@@ -171,7 +171,9 @@ async def generate_mockup(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating mockup: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating mockup: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

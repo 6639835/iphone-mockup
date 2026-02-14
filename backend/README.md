@@ -11,6 +11,9 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Install development dependencies (includes Black)
+pip install -r requirements-dev.txt
 ```
 
 ## Run Development Server
@@ -98,3 +101,13 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 - `PORT`: Server port (default: 8000)
 - `CORS_ORIGINS`: Comma-separated list of allowed origins (for production)
+
+## Code Formatting
+
+```bash
+# Format backend Python files
+black .
+
+# Or check formatting only
+black --check .
+```

@@ -36,13 +36,23 @@ IPHONE_MODELS = {
     "iPhone 16 Pro": IPhoneModel(
         name="iPhone 16 Pro",
         resolution=(1206, 2622),
-        colors=["Black Titanium", "Desert Titanium", "Natural Titanium", "White Titanium"],
+        colors=[
+            "Black Titanium",
+            "Desert Titanium",
+            "Natural Titanium",
+            "White Titanium",
+        ],
         series="16",
     ),
     "iPhone 16 Pro Max": IPhoneModel(
         name="iPhone 16 Pro Max",
         resolution=(1320, 2868),
-        colors=["Black Titanium", "Desert Titanium", "Natural Titanium", "White Titanium"],
+        colors=[
+            "Black Titanium",
+            "Desert Titanium",
+            "Natural Titanium",
+            "White Titanium",
+        ],
         series="16",
     ),
     # iPhone 17 Series
