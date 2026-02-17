@@ -1,119 +1,66 @@
-# iPhone Mockup Frontend
+# iPhone Mockup (Next.js Full-Stack)
 
-Next.js frontend for the iPhone Mockup Generator.
+This app is now fully implemented in Next.js (App Router) with server-side image generation in Route Handlers.
 
 ## Features
 
-- 🎨 Clean, minimal UI with shadcn/ui
-- 📱 Auto-detect iPhone model from screenshot
-- 🎨 Interactive color picker
-- 🖼️ Real-time preview
-- ⬇️ One-click download
-- 📸 Supports PNG, JPG, and HEIC formats
+- Upload screenshot and auto-detect iPhone model
+- Select device color and generate mockup server-side
+- Download generated PNG
+- Supports PNG/JPG/HEIC inputs
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- Backend API running (see ../backend/README.md)
+- Node.js 18+
 
 ### Installation
 
 ```bash
-# Install dependencies
 npm install
-
-# Create environment file
 cp .env.local.example .env.local
-
-# Edit .env.local if your backend is not on localhost:8000
 ```
 
 ### Development
 
 ```bash
-# Run development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Build for Production
+### Production
 
 ```bash
-# Build
 npm run build
-
-# Start production server
 npm start
 ```
 
 ## Environment Variables
 
-Create a `.env.local` file:
+`FRAMES_BASE_URL` (optional): base URL for frame assets.
+
+Default:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+FRAMES_BASE_URL=https://pub-7ad0d44bcb4948a2a359b34d35bc8fc8.r2.dev
 ```
 
-For production deployment to Vercel, set this in your project settings:
+If unset, the app also attempts local frame paths:
 
-```env
-NEXT_PUBLIC_API_URL=https://your-backend-api.com
-```
+- `frontend/public/frames/...`
+- `../frames/...` (useful in this monorepo)
 
-## Deployment to Vercel
+## API Endpoints (Next Route Handlers)
 
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Set environment variable:
-   - `NEXT_PUBLIC_API_URL`: Your backend API URL
-4. Deploy!
+- `GET /api` - Health check
+- `GET /api/models` - Supported models and colors
+- `POST /api/detect` - Detect model from uploaded screenshot (`multipart/form-data`, field `file`)
+- `POST /api/generate` - Generate mockup (`file`, `model?`, `color`, `orientation?`)
 
-### Deploy Button
+## Deployment
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+Deploy the `frontend` directory as a Node.js Next.js app (for example on Vercel).
 
-## Project Structure
-
-```
-frontend/
-├── app/
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Home page
-│   └── globals.css        # Global styles
-├── components/
-│   ├── mockup-generator.tsx  # Main mockup generator component
-│   └── ui/                   # shadcn/ui components
-│       ├── button.tsx
-│       └── card.tsx
-├── lib/
-│   └── utils.ts           # Utility functions
-└── public/                # Static assets
-```
-
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **UI**: shadcn/ui + Tailwind CSS
-- **Icons**: Lucide React
-- **Language**: TypeScript
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run format` - Format files with Prettier
-- `npm run format:check` - Check formatting with Prettier
-
-## API Integration
-
-The frontend communicates with the FastAPI backend via:
-
-- `POST /detect` - Detect iPhone model from screenshot
-- `POST /generate` - Generate mockup with selected color
-
-See the backend README for full API documentation.
+Note: static export mode is disabled because image generation runs server-side.

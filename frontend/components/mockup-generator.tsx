@@ -6,8 +6,6 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { cn } from "@/lib/utils";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 interface DetectionResult {
   detected_model: string;
   all_matches: string[];
@@ -43,7 +41,7 @@ export function MockupGenerator() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch(`${API_URL}/detect`, {
+      const response = await fetch("/api/detect", {
         method: "POST",
         body: formData,
       });
@@ -100,7 +98,7 @@ export function MockupGenerator() {
       formData.append("color", color);
       formData.append("orientation", "Portrait");
 
-      const response = await fetch(`${API_URL}/generate`, {
+      const response = await fetch("/api/generate", {
         method: "POST",
         body: formData,
       });
