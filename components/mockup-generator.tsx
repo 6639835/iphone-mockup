@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Upload, Download, Loader2, Smartphone } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { detectIPhoneModel, IPHONE_MODELS } from "@/lib/iphone-models";
 import { cn } from "@/lib/utils";
 
 interface DetectionResult {
@@ -15,6 +16,141 @@ interface DetectionResult {
 }
 
 type Step = "upload" | "select-color" | "preview";
+
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const TARGET_UPLOAD_BYTES = Math.floor(MAX_UPLOAD_BYTES * 0.95);
+const MAX_UPLOAD_LABEL = "4 MB";
+
+function uploadTooLargeMessage(): string {
+  return `Image is too large. Please use a file under ${MAX_UPLOAD_LABEL}.`;
+}
+
+function stripExtension(filename: string): string {
+  const index = filename.lastIndexOf(".");
+  return index > 0 ? filename.slice(0, index) : filename;
+}
+
+function loadImageElement(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not read the selected image."));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Image conversion failed."));
+          return;
+        }
+        resolve(blob);
+      },
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+async function optimizeUploadFile(file: File): Promise<File> {
+  if (file.size <= TARGET_UPLOAD_BYTES) {
+    return file;
+  }
+
+  const image = await loadImageElement(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Could not process image for upload.");
+  }
+
+  context.drawImage(image, 0, 0);
+
+  let quality = 0.92;
+  let blob = await canvasToJpegBlob(canvas, quality);
+
+  while (blob.size > TARGET_UPLOAD_BYTES && quality > 0.5) {
+    quality -= 0.08;
+    blob = await canvasToJpegBlob(canvas, quality);
+  }
+
+  if (blob.size > TARGET_UPLOAD_BYTES) {
+    throw new Error(uploadTooLargeMessage());
+  }
+
+  return new File([blob], `${stripExtension(file.name)}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
+async function parseErrorDetail(response: Response, fallback: string): Promise<string> {
+  if (response.status === 413) {
+    return uploadTooLargeMessage();
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const body = (await response.text()).trim();
+
+  if (!body) {
+    return fallback;
+  }
+
+  if (contentType.includes("application/json")) {
+    try {
+      const parsed = JSON.parse(body) as { detail?: unknown };
+      if (typeof parsed.detail === "string" && parsed.detail.trim().length > 0) {
+        return parsed.detail;
+      }
+    } catch {
+      // Fall through to plain-text response handling.
+    }
+  }
+
+  return body;
+}
+
+async function detectFromImage(file: File): Promise<DetectionResult> {
+  const image = await loadImageElement(file);
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+
+  const detection = detectIPhoneModel(width, height);
+  if (!detection.detectedModel) {
+    throw new Error(
+      "Could not detect iPhone model. Please ensure your screenshot matches iPhone 16 or 17 series dimensions."
+    );
+  }
+
+  const modelInfo = IPHONE_MODELS[detection.detectedModel];
+  if (!modelInfo) {
+    throw new Error("Detected model is not supported.");
+  }
+
+  return {
+    detected_model: detection.detectedModel,
+    all_matches: detection.allMatches,
+    colors: modelInfo.colors,
+    resolution: [width, height],
+    series: modelInfo.series,
+  };
+}
 
 export function MockupGenerator() {
   const [step, setStep] = useState<Step>("upload");
@@ -29,29 +165,16 @@ export function MockupGenerator() {
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setError(null);
-    setFile(selectedFile);
-
-    // Create preview
-    const url = URL.createObjectURL(selectedFile);
-    setPreviewUrl(url);
 
     // Detect iPhone model
     setIsDetecting(true);
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
+      const optimizedFile = await optimizeUploadFile(selectedFile);
+      const result = await detectFromImage(optimizedFile);
+      const url = URL.createObjectURL(optimizedFile);
 
-      const response = await fetch("/api/detect", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to detect iPhone model");
-      }
-
-      const result: DetectionResult = await response.json();
+      setFile(optimizedFile);
+      setPreviewUrl(url);
       setDetection(result);
       setStep("select-color");
     } catch (err) {
@@ -104,8 +227,8 @@ export function MockupGenerator() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to generate mockup");
+        const error = await parseErrorDetail(response, "Failed to generate mockup");
+        throw new Error(error);
       }
 
       const blob = await response.blob();

@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { detectIPhoneModel, IPHONE_MODELS } from "@/lib/iphone-models";
 
 export const runtime = "nodejs";
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 function badRequest(detail: string): Response {
   return Response.json({ detail }, { status: 400 });
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return badRequest("Image file is required");
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return Response.json(
+        { detail: "Image is too large. Please use a file under 4 MB." },
+        { status: 413 }
+      );
     }
 
     const imageBuffer = Buffer.from(await file.arrayBuffer());
