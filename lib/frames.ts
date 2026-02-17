@@ -47,7 +47,7 @@ async function loadLocalFrame(
   const filename = frameFilename(model, color, orientation);
   const localFrameRoots = [
     path.join(process.cwd(), "public", "frames"),
-    path.join(process.cwd(), "..", "frames"),
+    path.join(process.cwd(), "frames"),
   ];
 
   for (const frameRoot of localFrameRoots) {
