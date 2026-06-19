@@ -1,28 +1,29 @@
 export type Orientation = "Portrait" | "Landscape";
-export type DeviceKind = "iphone" | "mac";
+export type DeviceKind = "iphone" | "ipad" | "mac" | "imac" | "display" | "tv";
 
 export interface ScreenRect {
   // Absolute pixel rectangle of the transparent screen cutout inside the frame PNG.
+  // Measured per frame; equals the device's native screenshot resolution and position.
   left: number;
   top: number;
   width: number;
   height: number;
-  // Corner radius in pixels, matching the display's rounded corners.
-  radius: number;
 }
 
 export interface DeviceModel {
   name: string;
   kind: DeviceKind;
-  // Native screen resolution in natural orientation (portrait for iPhone, landscape for Mac).
+  // Native screen resolution in natural orientation (portrait for handhelds, landscape for
+  // laptops/desktops/displays). Used to detect the model from a screenshot's pixel size.
   resolution: [number, number];
   colors: string[];
-  // Orientations that have frame assets. iPhone: both. Mac: landscape only.
+  // Orientations that have frame assets.
   orientations: Orientation[];
-  // Tie-breaker for iPhones that share a resolution. Undefined for Mac.
+  // Tie-breaker for iPhones that share a resolution. Undefined for everything else.
   series?: "16" | "17";
-  // Exact screen placement for laptop frames. Undefined for iPhones (shared fractional insets).
-  screen?: ScreenRect;
+  // Exact screen placement per orientation. Undefined for iPhones, which use shared
+  // fractional insets. Laptops/tablets/desktops/displays each provide measured rects.
+  screens?: Partial<Record<Orientation, ScreenRect>>;
 }
 
 interface MatchCandidate {
@@ -31,16 +32,17 @@ interface MatchCandidate {
   series?: DeviceModel["series"];
 }
 
-const IPHONE_ORIENTATIONS: Orientation[] = ["Portrait", "Landscape"];
-const MAC_ORIENTATIONS: Orientation[] = ["Landscape"];
+const BOTH_ORIENTATIONS: Orientation[] = ["Portrait", "Landscape"];
+const LANDSCAPE_ONLY: Orientation[] = ["Landscape"];
 
 export const DEVICE_MODELS: Record<string, DeviceModel> = {
+  // ----- iPhone (16 & 17 series) -----
   "iPhone 16": {
     name: "iPhone 16",
     kind: "iphone",
     resolution: [1179, 2556],
     colors: ["Black", "Pink", "Teal", "Ultramarine", "White"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "16",
   },
   "iPhone 16 Plus": {
@@ -48,7 +50,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1290, 2796],
     colors: ["Black", "Pink", "Teal", "Ultramarine", "White"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "16",
   },
   "iPhone 16 Pro": {
@@ -56,7 +58,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1206, 2622],
     colors: ["Black Titanium", "Desert Titanium", "Natural Titanium", "White Titanium"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "16",
   },
   "iPhone 16 Pro Max": {
@@ -64,7 +66,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1320, 2868],
     colors: ["Black Titanium", "Desert Titanium", "Natural Titanium", "White Titanium"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "16",
   },
   "iPhone 17": {
@@ -72,7 +74,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1206, 2622],
     colors: ["Black", "Lavender", "Mist Blue", "Sage", "White"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "17",
   },
   "iPhone Air": {
@@ -80,7 +82,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1242, 2700],
     colors: ["Cloud White", "Light Gold", "Sky Blue", "Space Black"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "17",
   },
   "iPhone 17 Pro": {
@@ -88,7 +90,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1206, 2622],
     colors: ["Cosmic Orange", "Deep Blue", "Silver"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "17",
   },
   "iPhone 17 Pro Max": {
@@ -96,46 +98,155 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     kind: "iphone",
     resolution: [1320, 2868],
     colors: ["Cosmic Orange", "Deep Blue", "Silver"],
-    orientations: IPHONE_ORIENTATIONS,
+    orientations: BOTH_ORIENTATIONS,
     series: "17",
   },
-  // Mac frames are landscape-only. Screen rects were measured from the transparent
-  // screen cutout in each Bezel frame PNG and match the native screenshot resolution 1:1.
-  // radius is 0: the frame's opaque bezel already defines the (squircle) rounded screen
-  // corners, so we fill the whole cutout with the screenshot rather than masking it with a
-  // circular radius — a circular mask would over-round the squircle and leave the corners
-  // uncovered.
+
+  // ----- iPad -----
+  // Screen rects measured from the transparent cutout in each Bezel frame (per orientation).
+  "iPad (A16)": {
+    name: "iPad (A16)",
+    kind: "ipad",
+    resolution: [2360, 1640],
+    colors: ["Blue", "Pink", "Silver", "Yellow"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 200, top: 200, width: 2360, height: 1639 },
+      Portrait: { left: 200, top: 200, width: 1639, height: 2360 },
+    },
+  },
+  "iPad mini (A17 Pro)": {
+    name: "iPad mini (A17 Pro)",
+    kind: "ipad",
+    resolution: [2266, 1488],
+    colors: ["Blue", "Purple", "Space Gray", "Starlight"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 142, top: 146, width: 2266, height: 1488 },
+      Portrait: { left: 146, top: 142, width: 1488, height: 2266 },
+    },
+  },
+  "iPad Air 11-inch (M4)": {
+    name: "iPad Air 11-inch (M4)",
+    kind: "ipad",
+    resolution: [2360, 1640],
+    colors: ["Blue", "Purple", "Space Gray", "Starlight"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 130, top: 130, width: 2360, height: 1640 },
+      Portrait: { left: 130, top: 130, width: 1640, height: 2360 },
+    },
+  },
+  "iPad Air 13-inch (M4)": {
+    name: "iPad Air 13-inch (M4)",
+    kind: "ipad",
+    resolution: [2732, 2048],
+    colors: ["Blue", "Purple", "Space Gray", "Starlight"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 124, top: 126, width: 2732, height: 2048 },
+      Portrait: { left: 126, top: 124, width: 2048, height: 2732 },
+    },
+  },
+  "iPad Pro (M5) 11-inch": {
+    name: "iPad Pro (M5) 11-inch",
+    kind: "ipad",
+    resolution: [2420, 1668],
+    colors: ["Silver", "Space Black"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 110, top: 106, width: 2420, height: 1668 },
+      Portrait: { left: 106, top: 110, width: 1668, height: 2420 },
+    },
+  },
+  "iPad Pro (M5) 13-inch": {
+    name: "iPad Pro (M5) 13-inch",
+    kind: "ipad",
+    resolution: [2752, 2064],
+    colors: ["Silver", "Space Black"],
+    orientations: BOTH_ORIENTATIONS,
+    screens: {
+      Landscape: { left: 124, top: 118, width: 2752, height: 2064 },
+      Portrait: { left: 118, top: 124, width: 2064, height: 2752 },
+    },
+  },
+
+  // ----- Mac laptops (landscape only) -----
+  // radius is irrelevant: the bezel defines the (squircle) rounded screen corners, so we fill
+  // the whole cutout rather than masking with a circular radius (which would over-round it).
   "MacBook Air M5 13-inch": {
     name: "MacBook Air M5 13-inch",
     kind: "mac",
     resolution: [2560, 1664],
     colors: ["Midnight", "Silver", "Sky Blue", "Starlight"],
-    orientations: MAC_ORIENTATIONS,
-    screen: { left: 420, top: 288, width: 2560, height: 1664, radius: 0 },
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 420, top: 288, width: 2560, height: 1664 } },
   },
   "MacBook Air M5 15-inch": {
     name: "MacBook Air M5 15-inch",
     kind: "mac",
     resolution: [2880, 1864],
     colors: ["Midnight", "Silver", "Sky Blue", "Starlight"],
-    orientations: MAC_ORIENTATIONS,
-    screen: { left: 329, top: 218, width: 2880, height: 1864, radius: 0 },
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 329, top: 218, width: 2880, height: 1864 } },
   },
   "MacBook Pro M5 14-inch": {
     name: "MacBook Pro M5 14-inch",
     kind: "mac",
     resolution: [3024, 1964],
     colors: ["Silver", "Space Black"],
-    orientations: MAC_ORIENTATIONS,
-    screen: { left: 418, top: 288, width: 3024, height: 1964, radius: 0 },
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 418, top: 288, width: 3024, height: 1964 } },
   },
   "MacBook Pro M5 16-inch": {
     name: "MacBook Pro M5 16-inch",
     kind: "mac",
     resolution: [3456, 2234],
     colors: ["Silver", "Space Black"],
-    orientations: MAC_ORIENTATIONS,
-    screen: { left: 402, top: 303, width: 3456, height: 2234, radius: 0 },
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 402, top: 303, width: 3456, height: 2234 } },
+  },
+  "MacBook Neo": {
+    name: "MacBook Neo",
+    kind: "mac",
+    resolution: [2408, 1506],
+    colors: ["Blush", "Citrus", "Indigo", "Silver"],
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 406, top: 297, width: 2408, height: 1506 } },
+  },
+
+  // ----- Desktops & displays (landscape only) -----
+  "iMac M4 24-inch": {
+    name: "iMac M4 24-inch",
+    kind: "imac",
+    resolution: [4480, 2520],
+    colors: ["Blue", "Green", "Orange", "Pink", "Purple", "Silver", "Yellow"],
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 140, top: 150, width: 4480, height: 2520 } },
+  },
+  "Studio Display": {
+    name: "Studio Display",
+    kind: "display",
+    resolution: [5120, 2880],
+    colors: ["Dark", "Light"],
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 140, top: 140, width: 5120, height: 2880 } },
+  },
+  "Studio Display XDR": {
+    name: "Studio Display XDR",
+    kind: "display",
+    resolution: [5120, 2880],
+    colors: ["Dark", "Light"],
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 140, top: 140, width: 5120, height: 2880 } },
+  },
+  "Apple TV 4K": {
+    name: "Apple TV 4K",
+    kind: "tv",
+    resolution: [3840, 2160],
+    colors: ["Black"],
+    orientations: LANDSCAPE_ONLY,
+    screens: { Landscape: { left: 103, top: 119, width: 3840, height: 2160 } },
   },
 };
 

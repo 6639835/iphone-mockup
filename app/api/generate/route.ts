@@ -92,7 +92,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const mockupBuffer = await composeMockup(frameBuffer, screenshotBuffer, modelInfo.screen);
+    const mockupBuffer = await composeMockup(
+      frameBuffer,
+      screenshotBuffer,
+      modelInfo.screens?.[orientationInput]
+    );
     const downloadName = `mockup-${model}-${color}.png`.replace(/\s+/g, "-");
 
     return new Response(new Uint8Array(mockupBuffer), {

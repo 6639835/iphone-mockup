@@ -1,7 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Download, Laptop, Loader2, Smartphone, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  Laptop,
+  Loader2,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Tv,
+  Upload,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { detectDevice, DEVICE_MODELS, type DeviceKind, type Orientation } from "@/lib/devices";
@@ -9,10 +20,8 @@ import { detectDevice, DEVICE_MODELS, type DeviceKind, type Orientation } from "
 interface DetectionResult {
   detected_model: string;
   all_matches: string[];
-  colors: string[];
   resolution: [number, number];
-  kind: DeviceKind;
-  orientation: Orientation;
+  naturalOrientation: Orientation;
 }
 
 interface BatchItem {
@@ -21,10 +30,30 @@ interface BatchItem {
   file: File;
   previewUrl: string;
   detection: DetectionResult;
+  selectedModel: string;
   selectedColor: string;
   status: "ready" | "processing" | "done" | "failed";
   mockupUrl: string | null;
   error: string | null;
+}
+
+const KIND_ICONS: Record<DeviceKind, LucideIcon> = {
+  iphone: Smartphone,
+  ipad: Tablet,
+  mac: Laptop,
+  imac: Monitor,
+  display: Monitor,
+  tv: Tv,
+};
+
+// The orientation a given model can actually render for a screenshot of this natural
+// orientation (e.g. landscape-only devices always fall back to Landscape).
+function resolveOrientation(modelName: string, natural: Orientation): Orientation {
+  const model = DEVICE_MODELS[modelName];
+  if (!model) {
+    return natural;
+  }
+  return model.orientations.includes(natural) ? natural : model.orientations[0];
 }
 
 type Step = "upload" | "configure" | "results";
@@ -55,7 +84,7 @@ function buildDownloadName(item: BatchItem): string {
   const baseName = stripExtension(item.originalName);
   const parts = [
     "mockup",
-    slugifyFilename(item.detection.detected_model),
+    slugifyFilename(item.selectedModel),
     slugifyFilename(item.selectedColor),
     slugifyFilename(baseName),
   ].filter(Boolean);
@@ -184,18 +213,11 @@ async function detectFromImage(file: File): Promise<DetectionResult> {
     throw new Error("Detected model is not supported.");
   }
 
-  const naturalOrientation: Orientation = width > height ? "Landscape" : "Portrait";
-  const orientation = modelInfo.orientations.includes(naturalOrientation)
-    ? naturalOrientation
-    : modelInfo.orientations[0];
-
   return {
     detected_model: detection.detectedModel,
     all_matches: detection.allMatches,
-    colors: modelInfo.colors,
     resolution: [width, height],
-    kind: modelInfo.kind,
-    orientation,
+    naturalOrientation: width > height ? "Landscape" : "Portrait",
   };
 }
 
@@ -268,7 +290,7 @@ export function MockupGenerator() {
         try {
           const optimizedFile = await optimizeUploadFile(selectedFile);
           const detection = await detectFromImage(optimizedFile);
-          const defaultColor = detection.colors[0];
+          const defaultColor = DEVICE_MODELS[detection.detected_model]?.colors[0];
 
           if (!defaultColor) {
             skippedMessages.push(`${selectedFile.name}: no available colors for this model.`);
@@ -281,6 +303,7 @@ export function MockupGenerator() {
             file: optimizedFile,
             previewUrl: createObjectUrl(optimizedFile),
             detection,
+            selectedModel: detection.detected_model,
             selectedColor: defaultColor,
             status: "ready",
             mockupUrl: null,
@@ -334,6 +357,27 @@ export function MockupGenerator() {
     [handleFileSelect]
   );
 
+  const handleModelChange = (id: string, model: string) => {
+    setBatchItems((currentItems) =>
+      currentItems.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+
+        const colors = DEVICE_MODELS[model]?.colors ?? [];
+        const selectedColor = colors.includes(item.selectedColor) ? item.selectedColor : colors[0];
+
+        return {
+          ...item,
+          selectedModel: model,
+          selectedColor,
+          status: "ready",
+          error: null,
+        };
+      })
+    );
+  };
+
   const handleColorChange = (id: string, color: string) => {
     setBatchItems((currentItems) =>
       currentItems.map((item) => {
@@ -368,9 +412,12 @@ export function MockupGenerator() {
     async (item: BatchItem): Promise<string> => {
       const formData = new FormData();
       formData.append("file", item.file);
-      formData.append("model", item.detection.detected_model);
+      formData.append("model", item.selectedModel);
       formData.append("color", item.selectedColor);
-      formData.append("orientation", item.detection.orientation);
+      formData.append(
+        "orientation",
+        resolveOrientation(item.selectedModel, item.detection.naturalOrientation)
+      );
 
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -512,8 +559,8 @@ export function MockupGenerator() {
                     </p>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                    Supports PNG, JPG, HEIC (iPhone 16 &amp; 17 series and MacBook Air/Pro M5). Up to 4 MB
-                    per image.
+                    Supports PNG, JPG, HEIC — iPhone, iPad, MacBook, iMac, Studio Display &amp; Apple
+                    TV. Up to 4 MB per image.
                   </p>
                 </div>
               )}
@@ -529,7 +576,7 @@ export function MockupGenerator() {
                     {batchItems.length} screenshot{batchItems.length > 1 ? "s" : ""} ready
                   </p>
                   <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                    Pick a frame color for each screenshot, then process the batch.
+                    Confirm the device model and color for each screenshot, then process the batch.
                   </p>
                 </div>
                 <Button onClick={handleReset} variant="outline" size="sm">
@@ -538,70 +585,98 @@ export function MockupGenerator() {
               </div>
 
               <div className="space-y-4">
-                {batchItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row">
-                      <img
-                        src={item.previewUrl}
-                        alt={`Preview: ${item.originalName}`}
-                        className="h-28 w-auto rounded object-contain"
-                      />
-                      <div className="flex-1">
-                        <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                          {item.originalName}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-                          {item.detection.kind === "mac" ? (
-                            <Laptop className="h-4 w-4" />
-                          ) : (
-                            <Smartphone className="h-4 w-4" />
-                          )}
-                          <span>{item.detection.detected_model}</span>
-                          <span>·</span>
-                          <span>
-                            {item.detection.resolution[0]} × {item.detection.resolution[1]}
-                          </span>
-                          <span>·</span>
-                          <span>{item.detection.orientation}</span>
-                        </div>
+                {batchItems.map((item) => {
+                  const model = DEVICE_MODELS[item.selectedModel];
+                  const DeviceIcon = KIND_ICONS[model?.kind ?? "iphone"];
+                  const colors = model?.colors ?? [];
+                  const orientation = resolveOrientation(
+                    item.selectedModel,
+                    item.detection.naturalOrientation
+                  );
+                  const modelOptions =
+                    item.detection.all_matches.length > 1
+                      ? item.detection.all_matches
+                      : [item.selectedModel];
+                  const selectClassName =
+                    "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100";
 
-                        {item.detection.all_matches.length > 1 && (
-                          <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-500">
-                            Also matches:{" "}
-                            {item.detection.all_matches
-                              .filter((model) => model !== item.detection.detected_model)
-                              .join(", ")}
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row">
+                        <img
+                          src={item.previewUrl}
+                          alt={`Preview: ${item.originalName}`}
+                          className="h-28 w-auto rounded object-contain"
+                        />
+                        <div className="flex-1">
+                          <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                            {item.originalName}
                           </p>
-                        )}
+                          <div className="mt-2 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                            <DeviceIcon className="h-4 w-4" />
+                            <span>{item.selectedModel}</span>
+                            <span>·</span>
+                            <span>
+                              {item.detection.resolution[0]} × {item.detection.resolution[1]}
+                            </span>
+                            <span>·</span>
+                            <span>{orientation}</span>
+                          </div>
 
-                        <div className="mt-3 max-w-xs">
-                          <label
-                            htmlFor={`color-${item.id}`}
-                            className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400"
-                          >
-                            Device color
-                          </label>
-                          <select
-                            id={`color-${item.id}`}
-                            value={item.selectedColor}
-                            onChange={(e) => handleColorChange(item.id, e.target.value)}
-                            disabled={isGeneratingBatch}
-                            className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
-                          >
-                            {item.detection.colors.map((color) => (
-                              <option key={color} value={color}>
-                                {color}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="mt-3 flex flex-col gap-3 sm:max-w-md sm:flex-row">
+                            {modelOptions.length > 1 && (
+                              <div className="flex-1">
+                                <label
+                                  htmlFor={`model-${item.id}`}
+                                  className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400"
+                                >
+                                  Device model
+                                </label>
+                                <select
+                                  id={`model-${item.id}`}
+                                  value={item.selectedModel}
+                                  onChange={(e) => handleModelChange(item.id, e.target.value)}
+                                  disabled={isGeneratingBatch}
+                                  className={selectClassName}
+                                >
+                                  {modelOptions.map((modelName) => (
+                                    <option key={modelName} value={modelName}>
+                                      {modelName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <label
+                                htmlFor={`color-${item.id}`}
+                                className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-400"
+                              >
+                                Device color
+                              </label>
+                              <select
+                                id={`color-${item.id}`}
+                                value={item.selectedColor}
+                                onChange={(e) => handleColorChange(item.id, e.target.value)}
+                                disabled={isGeneratingBatch}
+                                className={selectClassName}
+                              >
+                                {colors.map((color) => (
+                                  <option key={color} value={color}>
+                                    {color}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -674,7 +749,7 @@ export function MockupGenerator() {
                             {item.originalName}
                           </p>
                           <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                            {item.detection.detected_model} · {item.selectedColor}
+                            {item.selectedModel} · {item.selectedColor}
                           </p>
                           {item.status === "failed" && item.error && (
                             <p className="mt-2 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">

@@ -45,11 +45,13 @@ export async function composeMockup(
   let radiusPx: number;
 
   if (screen) {
+    // Explicit cutout (laptops/tablets/desktops/displays): fill the whole rect. The frame's
+    // opaque bezel defines the rounded (squircle) corners, so no circular mask is applied.
     left = screen.left;
     top = screen.top;
     viewportWidth = screen.width;
     viewportHeight = screen.height;
-    radiusPx = screen.radius;
+    radiusPx = 0;
   } else {
     left = Math.round(frameWidth * DEFAULT_LEFT_INSET);
     const right = frameWidth - Math.round(frameWidth * DEFAULT_RIGHT_INSET);

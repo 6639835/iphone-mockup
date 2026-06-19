@@ -5,9 +5,13 @@ Generate device mockups from screenshots using a full-stack Next.js app.
 Supported devices:
 
 - **iPhone** (16 & 17 series): iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max, iPhone 17 / 17 Pro / 17 Pro Max, iPhone Air — portrait & landscape.
-- **Mac** (M5): MacBook Air 13" & 15", MacBook Pro 14" & 16" — landscape.
+- **iPad**: iPad (A16), iPad mini (A17 Pro), iPad Air 11"/13" (M4), iPad Pro 11"/13" (M5) — portrait & landscape.
+- **Mac laptops**: MacBook Air 13"/15" (M5), MacBook Pro 14"/16" (M5), MacBook Neo — landscape.
+- **Desktops & displays**: iMac 24" (M4), Studio Display, Studio Display XDR, Apple TV 4K — landscape.
 
-Models are detected automatically from the screenshot's native resolution.
+Models are detected automatically from the screenshot's native resolution. When several
+devices share a resolution (e.g. iPad vs iPad Air 11"), pick the right one from the model
+dropdown before processing.
 
 ## Quick Start
 
