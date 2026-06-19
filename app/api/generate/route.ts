@@ -1,7 +1,7 @@
 import sharp from "sharp";
 
 import { loadFrameBuffer } from "@/lib/frames";
-import { detectIPhoneModel, IPHONE_MODELS, type Orientation } from "@/lib/iphone-models";
+import { detectDevice, DEVICE_MODELS, type Orientation } from "@/lib/devices";
 import { composeMockup } from "@/lib/mockup";
 
 export const runtime = "nodejs";
@@ -60,16 +60,22 @@ export async function POST(request: Request) {
         return badRequest("Could not read image dimensions");
       }
 
-      const detection = detectIPhoneModel(metadata.width, metadata.height);
+      const detection = detectDevice(metadata.width, metadata.height);
       if (!detection.detectedModel) {
-        return badRequest("Could not detect iPhone model");
+        return badRequest("Could not detect device model");
       }
       model = detection.detectedModel;
     }
 
-    const modelInfo = IPHONE_MODELS[model];
+    const modelInfo = DEVICE_MODELS[model];
     if (!modelInfo) {
       return badRequest(`Invalid model: ${model}`);
+    }
+
+    if (!modelInfo.orientations.includes(orientationInput)) {
+      return badRequest(
+        `Invalid orientation '${orientationInput}' for ${model}. Available: ${modelInfo.orientations.join(", ")}`
+      );
     }
 
     if (!modelInfo.colors.includes(color)) {
@@ -86,7 +92,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const mockupBuffer = await composeMockup(frameBuffer, screenshotBuffer);
+    const mockupBuffer = await composeMockup(frameBuffer, screenshotBuffer, modelInfo.screen);
     const downloadName = `mockup-${model}-${color}.png`.replace(/\s+/g, "-");
 
     return new Response(new Uint8Array(mockupBuffer), {

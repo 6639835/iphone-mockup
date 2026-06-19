@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { Orientation } from "@/lib/iphone-models";
+import type { Orientation } from "@/lib/devices";
 
 const DEFAULT_FRAMES_BASE_URL = "https://pub-7ad0d44bcb4948a2a359b34d35bc8fc8.r2.dev";
 const FRAMES_BASE_URL = (process.env.FRAMES_BASE_URL || DEFAULT_FRAMES_BASE_URL)

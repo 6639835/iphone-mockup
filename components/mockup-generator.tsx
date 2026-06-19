@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Download, Loader2, Smartphone, Upload } from "lucide-react";
+import { AlertCircle, Download, Laptop, Loader2, Smartphone, Upload } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { detectIPhoneModel, IPHONE_MODELS, type Orientation } from "@/lib/iphone-models";
+import { detectDevice, DEVICE_MODELS, type DeviceKind, type Orientation } from "@/lib/devices";
 
 interface DetectionResult {
   detected_model: string;
   all_matches: string[];
   colors: string[];
   resolution: [number, number];
-  series: string;
+  kind: DeviceKind;
   orientation: Orientation;
 }
 
@@ -172,25 +172,30 @@ async function detectFromImage(file: File): Promise<DetectionResult> {
   const width = image.naturalWidth;
   const height = image.naturalHeight;
 
-  const detection = detectIPhoneModel(width, height);
+  const detection = detectDevice(width, height);
   if (!detection.detectedModel) {
     throw new Error(
-      "Could not detect iPhone model. Please ensure your screenshot matches iPhone 16 or 17 series dimensions."
+      "Could not detect device model. Please ensure your screenshot matches a supported iPhone or MacBook resolution."
     );
   }
 
-  const modelInfo = IPHONE_MODELS[detection.detectedModel];
+  const modelInfo = DEVICE_MODELS[detection.detectedModel];
   if (!modelInfo) {
     throw new Error("Detected model is not supported.");
   }
+
+  const naturalOrientation: Orientation = width > height ? "Landscape" : "Portrait";
+  const orientation = modelInfo.orientations.includes(naturalOrientation)
+    ? naturalOrientation
+    : modelInfo.orientations[0];
 
   return {
     detected_model: detection.detectedModel,
     all_matches: detection.allMatches,
     colors: modelInfo.colors,
     resolution: [width, height],
-    series: modelInfo.series,
-    orientation: width > height ? "Landscape" : "Portrait",
+    kind: modelInfo.kind,
+    orientation,
   };
 }
 
@@ -462,7 +467,9 @@ export function MockupGenerator() {
       <Card>
         <CardHeader>
           <CardTitle>Batch Mockup Processor</CardTitle>
-          <CardDescription>Upload one or more iPhone screenshots to process together</CardDescription>
+          <CardDescription>
+            Upload one or more iPhone or Mac screenshots to process together
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -505,7 +512,8 @@ export function MockupGenerator() {
                     </p>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                    Supports PNG, JPG, HEIC (iPhone 16 & 17 series). Up to 4 MB per image.
+                    Supports PNG, JPG, HEIC (iPhone 16 &amp; 17 series and MacBook Air/Pro M5). Up to 4 MB
+                    per image.
                   </p>
                 </div>
               )}
@@ -546,7 +554,11 @@ export function MockupGenerator() {
                           {item.originalName}
                         </p>
                         <div className="mt-2 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-                          <Smartphone className="h-4 w-4" />
+                          {item.detection.kind === "mac" ? (
+                            <Laptop className="h-4 w-4" />
+                          ) : (
+                            <Smartphone className="h-4 w-4" />
+                          )}
                           <span>{item.detection.detected_model}</span>
                           <span>·</span>
                           <span>

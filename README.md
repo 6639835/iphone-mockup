@@ -1,6 +1,13 @@
-# iPhone Mockup Generator
+# Device Mockup Generator
 
-Generate iPhone device mockups from screenshots using a full-stack Next.js app.
+Generate device mockups from screenshots using a full-stack Next.js app.
+
+Supported devices:
+
+- **iPhone** (16 & 17 series): iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max, iPhone 17 / 17 Pro / 17 Pro Max, iPhone Air — portrait & landscape.
+- **Mac** (M5): MacBook Air 13" & 15", MacBook Pro 14" & 16" — landscape.
+
+Models are detected automatically from the screenshot's native resolution.
 
 ## Quick Start
 

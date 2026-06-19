@@ -1,6 +1,6 @@
 import sharp from "sharp";
 
-import { detectIPhoneModel, IPHONE_MODELS } from "@/lib/iphone-models";
+import { detectDevice, DEVICE_MODELS } from "@/lib/devices";
 
 export const runtime = "nodejs";
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -32,21 +32,23 @@ export async function POST(request: Request) {
       return badRequest("Could not read image dimensions");
     }
 
-    const detection = detectIPhoneModel(metadata.width, metadata.height);
+    const detection = detectDevice(metadata.width, metadata.height);
     if (!detection.detectedModel) {
       return badRequest(
-        "Could not detect iPhone model. Please ensure your screenshot matches iPhone 16 or 17 series dimensions."
+        "Could not detect device model. Please ensure your screenshot matches a supported iPhone or MacBook resolution."
       );
     }
 
-    const modelInfo = IPHONE_MODELS[detection.detectedModel];
+    const modelInfo = DEVICE_MODELS[detection.detectedModel];
 
     return Response.json({
       detected_model: detection.detectedModel,
       all_matches: detection.allMatches,
       colors: modelInfo.colors,
       resolution: [metadata.width, metadata.height],
-      series: modelInfo.series,
+      kind: modelInfo.kind,
+      series: modelInfo.series ?? null,
+      orientations: modelInfo.orientations,
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unexpected image processing error";

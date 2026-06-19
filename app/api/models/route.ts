@@ -1,16 +1,18 @@
-import { IPHONE_MODELS } from "@/lib/iphone-models";
+import { DEVICE_MODELS } from "@/lib/devices";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const models = Object.fromEntries(
-    Object.entries(IPHONE_MODELS).map(([modelName, modelInfo]) => [
+    Object.entries(DEVICE_MODELS).map(([modelName, modelInfo]) => [
       modelName,
       {
         name: modelInfo.name,
+        kind: modelInfo.kind,
         resolution: modelInfo.resolution,
         colors: modelInfo.colors,
-        series: modelInfo.series,
+        orientations: modelInfo.orientations,
+        series: modelInfo.series ?? null,
       },
     ])
   );

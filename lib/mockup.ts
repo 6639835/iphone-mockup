@@ -1,5 +1,7 @@
 import sharp from "sharp";
 
+import type { ScreenRect } from "@/lib/devices";
+
 const DEFAULT_LEFT_INSET = 0.05;
 const DEFAULT_RIGHT_INSET = 0.05;
 const DEFAULT_TOP_INSET = 0.025;
@@ -15,14 +17,17 @@ function roundedRectMaskSvg(width: number, height: number, radius: number): Buff
   return Buffer.from(svg);
 }
 
+/**
+ * Composites a screenshot into a device frame.
+ *
+ * When `screen` is provided (laptop frames), the screenshot is placed at that exact
+ * pixel rectangle. Otherwise it falls back to the fractional insets that fit every
+ * iPhone frame.
+ */
 export async function composeMockup(
   frameBuffer: Buffer,
   screenshotBuffer: Buffer,
-  leftInset: number = DEFAULT_LEFT_INSET,
-  rightInset: number = DEFAULT_RIGHT_INSET,
-  topInset: number = DEFAULT_TOP_INSET,
-  bottomInset: number = DEFAULT_BOTTOM_INSET,
-  radius: number = DEFAULT_RADIUS
+  screen?: ScreenRect
 ): Promise<Buffer> {
   const normalizedFrameBuffer = await sharp(frameBuffer).ensureAlpha().png().toBuffer();
   const frameMetadata = await sharp(normalizedFrameBuffer).metadata();
@@ -33,17 +38,36 @@ export async function composeMockup(
     throw new Error("Invalid frame image");
   }
 
-  const left = Math.round(frameWidth * leftInset);
-  const right = frameWidth - Math.round(frameWidth * rightInset);
-  const top = Math.round(frameHeight * topInset);
-  const bottom = frameHeight - Math.round(frameHeight * bottomInset);
+  let left: number;
+  let top: number;
+  let viewportWidth: number;
+  let viewportHeight: number;
+  let radiusPx: number;
 
-  const viewportWidth = right - left;
-  const viewportHeight = bottom - top;
+  if (screen) {
+    left = screen.left;
+    top = screen.top;
+    viewportWidth = screen.width;
+    viewportHeight = screen.height;
+    radiusPx = screen.radius;
+  } else {
+    left = Math.round(frameWidth * DEFAULT_LEFT_INSET);
+    const right = frameWidth - Math.round(frameWidth * DEFAULT_RIGHT_INSET);
+    top = Math.round(frameHeight * DEFAULT_TOP_INSET);
+    const bottom = frameHeight - Math.round(frameHeight * DEFAULT_BOTTOM_INSET);
+    viewportWidth = right - left;
+    viewportHeight = bottom - top;
+    radiusPx = Math.round(Math.min(viewportWidth, viewportHeight) * DEFAULT_RADIUS);
+  }
 
   if (viewportWidth <= 0 || viewportHeight <= 0) {
-    throw new Error("Invalid insets: viewport has non-positive size");
+    throw new Error("Invalid screen geometry: viewport has non-positive size");
   }
+
+  radiusPx = Math.max(
+    0,
+    Math.min(radiusPx, Math.floor(Math.min(viewportWidth, viewportHeight) / 2))
+  );
 
   const fittedScreenshot = await sharp(screenshotBuffer)
     .rotate()
@@ -55,23 +79,18 @@ export async function composeMockup(
     .png()
     .toBuffer();
 
-  const radiusPx = Math.max(
-    0,
-    Math.min(
-      Math.round(Math.min(viewportWidth, viewportHeight) * radius),
-      Math.floor(Math.min(viewportWidth, viewportHeight) / 2)
-    )
-  );
-
-  const maskedScreenshot = await sharp(fittedScreenshot)
-    .composite([
-      {
-        input: roundedRectMaskSvg(viewportWidth, viewportHeight, radiusPx),
-        blend: "dest-in",
-      },
-    ])
-    .png()
-    .toBuffer();
+  let screenshotInput = fittedScreenshot;
+  if (radiusPx > 0) {
+    screenshotInput = await sharp(fittedScreenshot)
+      .composite([
+        {
+          input: roundedRectMaskSvg(viewportWidth, viewportHeight, radiusPx),
+          blend: "dest-in",
+        },
+      ])
+      .png()
+      .toBuffer();
+  }
 
   const screenshotLayer = await sharp({
     create: {
@@ -81,7 +100,7 @@ export async function composeMockup(
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     },
   })
-    .composite([{ input: maskedScreenshot, left, top }])
+    .composite([{ input: screenshotInput, left, top }])
     .png()
     .toBuffer();
 
