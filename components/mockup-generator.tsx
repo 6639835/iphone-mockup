@@ -11,6 +11,7 @@ import {
   Tablet,
   Tv,
   Upload,
+  Watch,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -40,6 +41,7 @@ interface BatchItem {
 const KIND_ICONS: Record<DeviceKind, LucideIcon> = {
   iphone: Smartphone,
   ipad: Tablet,
+  watch: Watch,
   mac: Laptop,
   imac: Monitor,
   display: Monitor,
@@ -204,7 +206,7 @@ async function detectFromImage(file: File): Promise<DetectionResult> {
   const detection = detectDevice(width, height);
   if (!detection.detectedModel) {
     throw new Error(
-      "Could not detect device model. Please ensure your screenshot matches a supported iPhone or MacBook resolution."
+      "Could not detect device model. Please ensure your screenshot matches a supported Apple device resolution."
     );
   }
 
@@ -515,7 +517,7 @@ export function MockupGenerator() {
         <CardHeader>
           <CardTitle>Batch Mockup Processor</CardTitle>
           <CardDescription>
-            Upload one or more iPhone or Mac screenshots to process together
+            Upload one or more Apple device screenshots to process together
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -559,8 +561,8 @@ export function MockupGenerator() {
                     </p>
                   </div>
                   <p className="text-xs text-neutral-500 dark:text-neutral-500">
-                    Supports PNG, JPG, HEIC — iPhone, iPad, MacBook, iMac, Studio Display &amp; Apple
-                    TV. Up to 4 MB per image.
+                    Supports PNG, JPG, HEIC — iPhone, iPad, Apple Watch, MacBook, iMac, Studio
+                    Display &amp; Apple TV. Up to 4 MB per image.
                   </p>
                 </div>
               )}

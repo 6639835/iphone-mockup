@@ -4,7 +4,8 @@ Generate device mockups from screenshots using a full-stack Next.js app.
 
 Supported devices:
 
-- **iPhone** (16 & 17 series): iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max, iPhone 17 / 17 Pro / 17 Pro Max, iPhone Air — portrait & landscape.
+- **iPhone** (16–18 series): iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max, iPhone 17 / 17 Pro / 17 Pro Max, iPhone Air, iPhone 18 Pro / Pro Max, and iPhone Duo (inner-open, outer-closed, and outer-open configurations).
+- **Apple Watch**: Apple Watch Series 11 (42mm / 46mm), Apple Watch Ultra 2 (2024), and Apple Watch Ultra 3 (2025), including every official case-and-band bezel combination.
 - **iPad**: iPad (A16), iPad mini (A17 Pro), iPad Air 11"/13" (M4), iPad Pro 11"/13" (M5) — portrait & landscape.
 - **Mac laptops**: MacBook Air 13"/15" (M5), MacBook Pro 14"/16" (M5), MacBook Neo — landscape.
 - **Desktops & displays**: iMac 24" (M4), Studio Display, Studio Display XDR, Apple TV 4K — landscape.

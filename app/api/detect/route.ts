@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const detection = detectDevice(metadata.width, metadata.height);
     if (!detection.detectedModel) {
       return badRequest(
-        "Could not detect device model. Please ensure your screenshot matches a supported iPhone or MacBook resolution."
+        "Could not detect device model. Please ensure your screenshot matches a supported Apple device resolution."
       );
     }
 

@@ -1,5 +1,5 @@
 export type Orientation = "Portrait" | "Landscape";
-export type DeviceKind = "iphone" | "ipad" | "mac" | "imac" | "display" | "tv";
+export type DeviceKind = "iphone" | "ipad" | "watch" | "mac" | "imac" | "display" | "tv";
 
 export interface ScreenRect {
   // Absolute pixel rectangle of the transparent screen cutout inside the frame PNG.
@@ -20,9 +20,9 @@ export interface DeviceModel {
   // Orientations that have frame assets.
   orientations: Orientation[];
   // Tie-breaker for iPhones that share a resolution. Undefined for everything else.
-  series?: "16" | "17";
-  // Exact screen placement per orientation. Undefined for iPhones, which use shared
-  // fractional insets. Laptops/tablets/desktops/displays each provide measured rects.
+  series?: "16" | "17" | "18";
+  // Exact screen placement per orientation. Older iPhones use shared fractional insets;
+  // newer phones, watches, tablets, and computers provide measured rects.
   screens?: Partial<Record<Orientation, ScreenRect>>;
 }
 
@@ -36,7 +36,7 @@ const BOTH_ORIENTATIONS: Orientation[] = ["Portrait", "Landscape"];
 const LANDSCAPE_ONLY: Orientation[] = ["Landscape"];
 
 export const DEVICE_MODELS: Record<string, DeviceModel> = {
-  // ----- iPhone (16 & 17 series) -----
+  // ----- iPhone (16, 17 & 18 series) -----
   "iPhone 16": {
     name: "iPhone 16",
     kind: "iphone",
@@ -100,6 +100,179 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
     colors: ["Cosmic Orange", "Deep Blue", "Silver"],
     orientations: BOTH_ORIENTATIONS,
     series: "17",
+  },
+  "iPhone 18 Pro": {
+    name: "iPhone 18 Pro",
+    kind: "iphone",
+    resolution: [1206, 2622],
+    colors: ["Black", "Burgundy", "Glacier", "Silver"],
+    orientations: BOTH_ORIENTATIONS,
+    series: "18",
+    screens: {
+      Portrait: { left: 72, top: 69, width: 1206, height: 2622 },
+      Landscape: { left: 69, top: 72, width: 2622, height: 1206 },
+    },
+  },
+  "iPhone 18 Pro Max": {
+    name: "iPhone 18 Pro Max",
+    kind: "iphone",
+    resolution: [1320, 2868],
+    colors: ["Black", "Burgundy", "Glacier", "Silver"],
+    orientations: BOTH_ORIENTATIONS,
+    series: "18",
+    screens: {
+      Portrait: { left: 75, top: 66, width: 1320, height: 2868 },
+      Landscape: { left: 66, top: 76, width: 2868, height: 1320 },
+    },
+  },
+  "iPhone Duo Inner Open": {
+    name: "iPhone Duo Inner Open",
+    kind: "iphone",
+    resolution: [2007, 2853],
+    colors: ["Night Sky", "Star White"],
+    orientations: BOTH_ORIENTATIONS,
+    series: "18",
+    screens: {
+      Portrait: { left: 120, top: 120, width: 2007, height: 2853 },
+      Landscape: { left: 120, top: 120, width: 2853, height: 2007 },
+    },
+  },
+  "iPhone Duo Outer Closed": {
+    name: "iPhone Duo Outer Closed",
+    kind: "iphone",
+    resolution: [1398, 2034],
+    colors: ["Night Sky", "Star White"],
+    orientations: BOTH_ORIENTATIONS,
+    series: "18",
+    screens: {
+      Portrait: { left: 88, top: 80, width: 1398, height: 2034 },
+      Landscape: { left: 80, top: 88, width: 2034, height: 1398 },
+    },
+  },
+  "iPhone Duo Outer Open": {
+    name: "iPhone Duo Outer Open",
+    kind: "iphone",
+    resolution: [1398, 2034],
+    colors: ["Night Sky", "Star White"],
+    orientations: ["Portrait"],
+    series: "18",
+    screens: {
+      Portrait: { left: 1570, top: 80, width: 1398, height: 2034 },
+    },
+  },
+
+  // ----- Apple Watch -----
+  "Apple Watch Series 11 42mm": {
+    name: "Apple Watch Series 11 42mm",
+    kind: "watch",
+    resolution: [374, 446],
+    colors: [
+      "Aluminum Jet Black + Sport Band Black",
+      "Aluminum Jet Black + Sport Loop Dark Gray",
+      "Aluminum Rose Gold + Sport Band Light Blush",
+      "Aluminum Rose Gold + Sport Loop Purple Fog",
+      "Aluminum Silver + Sport Band Neon Yellow",
+      "Aluminum Silver + Sport Band Purple Fog",
+      "Aluminum Silver + Sport Loop Forest",
+      "Aluminum Silver + Sport Loop Neon Yellow",
+      "Aluminum Space Gray + Sport Band Anchor Blue",
+      "Aluminum Space Gray + Sport Band Black",
+      "Aluminum Space Gray + Sport Loop Anchor Blue",
+      "Aluminum Space Gray + Sport Loop Forest",
+      "Titanium Gold + Magnetic Link Sage Gray",
+      "Titanium Gold + Milanese Loop",
+      "Titanium Gold + Sport Band Light Blush",
+      "Titanium Gold + Sport Band Purple Fog",
+      "Titanium Natural + Magnetic Link Caramel",
+      "Titanium Natural + Milanese Loop",
+      "Titanium Natural + Sport Band Stone Gray",
+      "Titanium Slate + Magnetic Link Navy",
+      "Titanium Slate + Milanese Loop",
+      "Titanium Slate + Sport Band Black",
+    ],
+    orientations: ["Portrait"],
+    screens: { Portrait: { left: 73, top: 177, width: 374, height: 446 } },
+  },
+  "Apple Watch Series 11 46mm": {
+    name: "Apple Watch Series 11 46mm",
+    kind: "watch",
+    resolution: [416, 496],
+    colors: [
+      "Aluminum Jet Black + Sport Band Black",
+      "Aluminum Jet Black + Sport Loop Dark Gray",
+      "Aluminum Rose Gold + Sport Band Light Blush",
+      "Aluminum Rose Gold + Sport Loop Purple Fog",
+      "Aluminum Silver + Sport Band Neon Yellow",
+      "Aluminum Silver + Sport Band Purple Fog",
+      "Aluminum Silver + Sport Loop Forest",
+      "Aluminum Silver + Sport Loop Neon Yellow",
+      "Aluminum Space Gray + Sport Band Anchor Blue",
+      "Aluminum Space Gray + Sport Band Black",
+      "Aluminum Space Gray + Sport Loop Anchor Blue",
+      "Aluminum Space Gray + Sport Loop Forest",
+      "Titanium Gold + Magnetic Link Sage Gray",
+      "Titanium Gold + Milanese Loop",
+      "Titanium Gold + Sport Band Light Blush",
+      "Titanium Gold + Sport Band Purple Fog",
+      "Titanium Natural + Magnetic Link Caramel",
+      "Titanium Natural + Milanese Loop",
+      "Titanium Natural + Sport Band Stone Gray",
+      "Titanium Slate + Magnetic Link Navy",
+      "Titanium Slate + Milanese Loop",
+      "Titanium Slate + Sport Band Black",
+    ],
+    orientations: ["Portrait"],
+    screens: { Portrait: { left: 72, top: 192, width: 416, height: 496 } },
+  },
+  "Apple Watch Ultra 2 (2024)": {
+    name: "Apple Watch Ultra 2 (2024)",
+    kind: "watch",
+    resolution: [410, 502],
+    colors: [
+      "Black + Alpine Loop Dark Green",
+      "Black + Alpine Loop Navy",
+      "Black + Alpine Loop Tan",
+      "Black + Ocean Band Black",
+      "Black + Ocean Band Ice Blue",
+      "Black + Ocean Band Navy",
+      "Black + Titanium Milanese Loop",
+      "Black + Trail Loop Black",
+      "Black + Trail Loop Blue",
+      "Black + Trail Loop Green",
+      "Natural + Alpine Loop Dark Green",
+      "Natural + Alpine Loop Navy",
+      "Natural + Alpine Loop Tan",
+      "Natural + Ocean Band Black",
+      "Natural + Ocean Band Ice Blue",
+      "Natural + Ocean Band Navy",
+      "Natural + Titanium Milanese Loop",
+      "Natural + Trail Loop Black",
+      "Natural + Trail Loop Blue",
+    ],
+    orientations: ["Portrait"],
+    screens: { Portrait: { left: 95, top: 219, width: 410, height: 502 } },
+  },
+  "Apple Watch Ultra 3 (2025)": {
+    name: "Apple Watch Ultra 3 (2025)",
+    kind: "watch",
+    resolution: [422, 514],
+    colors: [
+      "Black + Alpine Loop Black",
+      "Black + Alpine Loop Light Blue",
+      "Black + Milanese Loop",
+      "Black + Ocean Band Anchor Blue",
+      "Black + Ocean Band Black",
+      "Black + Trail Loop Black Charcoal",
+      "Natural + Alpine Loop Light Blue",
+      "Natural + Alpine Loop Terra Cotta",
+      "Natural + Milanese Loop",
+      "Natural + Ocean Band Anchor Blue",
+      "Natural + Ocean Band Neon Green",
+      "Natural + Trail Loop Blue Bright Blue",
+      "Natural + Trail Loop Green Neon",
+    ],
+    orientations: ["Portrait"],
+    screens: { Portrait: { left: 89, top: 223, width: 422, height: 514 } },
   },
 
   // ----- iPad -----
@@ -253,7 +426,7 @@ export const DEVICE_MODELS: Record<string, DeviceModel> = {
 export function detectDevice(
   width: number,
   height: number,
-  preferSeries: DeviceModel["series"] = "17"
+  preferSeries: DeviceModel["series"] = "18"
 ): { detectedModel: string | null; allMatches: string[] } {
   let portraitWidth = width;
   let portraitHeight = height;
